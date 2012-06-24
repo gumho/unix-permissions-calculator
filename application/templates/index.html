@@ -1,0 +1,149 @@
+<html>
+<head>
+    <title>Unix Permissions Calculator</title>
+    <link rel="stylesheet" type="text/css" href="/static/css/bootstrap.min.css">
+    <style type="text/css">
+      body {
+        margin: 45px;
+      }
+      #instructions {
+        margin-top: 10px;
+      }
+      .octet {
+        margin-top: 20px;
+      }
+      .octet label {
+        display: inline;
+        margin-right: 10px;
+      }
+      .octet label i {
+        cursor: pointer;
+      }
+      #choice-group {
+        margin-top: 20px;
+      }
+      #permission {
+        margin-top: 20px;
+      }
+      footer {
+        color: #ccc;
+        margin-top: 45px;
+        padding: 35px 0 36px;
+        border-top: 1px solid #E5E5E5;
+        text-align: center;
+      }
+    </style>
+</head>
+<body>
+  <div id="wrapper">
+    <header>
+      <h1>
+        Unix Permissions Calculator
+        <br/>
+        <small>You don't always need to chmod 777 everything</small>
+      </h1>
+    </header>
+
+    <div id="instructions">
+      <p><strong>How to use:</strong> Select the desired level of access for each user class. The resulting octal representation will show below.</p>
+    </div>
+
+    <div id="choice-group">
+      <div class="octet">
+        <p class="octet-header">USER</p>
+        <label for="ur" class="js-tooltip" title="Read access"><input type="checkbox" class="bit" id="ur"/> <i class="icon-file"></i></label>
+        <label for="uw" class="js-tooltip" title="Write access"><input type="checkbox" class="bit" id="uw"/> <i class="icon-pencil"></i></label>
+        <label for="ux" class="js-tooltip" title="Exceute access"><input type="checkbox" class="bit" id="ux"/> <i class="icon-tasks"></i></label>
+      </div>
+      <div class="octet">
+        <p class="octet-header">GROUP</p>
+        <label for="gr" class="js-tooltip" title="Read access"><input type="checkbox" class="bit" id="gr"/> <i class="icon-file"></i></label>
+        <label for="gw" class="js-tooltip" title="Write access"><input type="checkbox" class="bit" id="gw"/> <i class="icon-pencil"></i></label>
+        <label for="gx" class="js-tooltip" title="Exceute access"><input type="checkbox" class="bit" id="gx"/> <i class="icon-tasks"></i></label>
+      </div>
+      <div class="octet">
+        <p class="octet-header">OTHER</p>
+        <label for="or" class="js-tooltip" title="Read access"><input type="checkbox" class="bit" id="or"/> <i class="icon-file"></i></label>
+        <label for="ow" class="js-tooltip" title="Write access"><input type="checkbox" class="bit" id="ow"/> <i class="icon-pencil"></i></label>
+        <label for="ox" class="js-tooltip" title="Exceute access"><input type="checkbox" class="bit" id="ox"/> <i class="icon-tasks"></i></label>
+      </div>
+      <div style="clear: both"></div>
+    </div>
+
+    <div id="permission">
+      <strong>Result: </strong><span></span>
+      <br/>
+      <strong>Example usage: </strong>chmod <span></span> kittens.png
+    </div>
+
+    <footer>
+      &copy; 2012 Ryan Hsu
+    </footer>
+  </div>
+  <script src="/static/js/jquery.js"></script>
+  <script src="/static/js/bootstrap.min.js"></script>
+  <script src="/static/js/underscore.js"></script>
+  <script src="/static/js/backbone.js"></script>
+  <script>
+    $(document).ready(function() {
+      // Tooltips
+      $('.js-tooltip').tooltip();
+
+      // Backbone 
+      var Permission = Backbone.Model.extend({
+        defaults: function() {
+          return {
+            ur: 0,
+            uw: 0,
+            ux: 0,
+            gr: 0,
+            gw: 0,
+            gx: 0,
+            or: 0,
+            ow: 0,
+            ox: 0
+          }
+        },
+        getUserPermission: function() {
+          return parseInt('' + this.get('ur') + this.get('uw') + this.get('ux'), 2);
+        },
+        getGroupPermission: function() {
+          return parseInt('' + this.get('gr') + this.get('gw') + this.get('gx'), 2);
+        },
+        getOtherPermission: function() {
+          return parseInt('' + this.get('or') + this.get('ow') + this.get('ox'), 2);
+        }
+      })
+
+      var ChoiceGroupView = Backbone.View.extend({
+        el: $('#choice-group'),
+        events: {
+          'click .bit': 'updatePermission'
+        },
+        initialize: function() {
+          this.model.bind('change', this.render, this);
+          this.permission = $('#permission');
+          this.render();
+        },
+        render: function() {
+          var u = this.model.getUserPermission();
+          var g = this.model.getGroupPermission();
+          var o = this.model.getOtherPermission();
+          $('span', this.permission).html('' + u + g + o);
+        },
+        updatePermission: function(e) {
+          var currentTarget = $(e.currentTarget);
+          var id = currentTarget.attr('id');
+          var bit = currentTarget.is(':checked') ? 1 : 0;
+          var setter = {}
+          setter[id] = bit
+          this.model.set(setter);
+        }
+      })
+
+      var permission = new Permission;
+      var choiceView = new ChoiceGroupView({model: permission});
+    });
+  </script>
+</body>
+</html>
